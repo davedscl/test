@@ -154,23 +154,54 @@ object SensorDatabase {
 
   
   def query(sensorConf:SensorInfo, fields:Seq[String],
-			conditions:Seq[String], size:Option[Int],timeFormat:Option[String]):SensorData= {
+			conditions:Seq[String], size:Option[Int],timeFormat:Option[String],orderBy:Option[String],order:Option[String],timeline:Option[String]):SensorData= {
     val sensor=sensorConf.sensor
     implicit val tf=timeFormat
         
     val selFields=selectedFields(sensor,fields)
-
+    val fieldOrder = orderBy.getOrElse("")
+    val selectedTimeline = timeline.getOrElse("timed")
     val data=(0 until selFields.size).map{f=>new ArrayBuffer[Any]}
     val time = new ArrayBuffer[Any]
+    val sortOrder = order.getOrElse("desc")
     
  	val query = new StringBuilder("select ")
     query.append((Seq("timed")++selFields).mkString(","))
-	query.append(" from ").append(sensor.name.toLowerCase )
-	if (conditions != null && conditions.length>0) 
-	  query.append(" where "+conditions.mkString(" and "))
-    if (size.isDefined) 
-	  query.append(" order by timed desc").append(" limit 0," + size.get);	
-
+	  query.append(" from ").append(sensor.name.toLowerCase )
+    if (conditions != null && conditions.length>0) 
+      query.append(" where "+conditions.mkString(" and "))
+      if (orderBy.isDefined){
+        query.append(" order by " +fieldOrder)
+        if(order.isDefined){
+          query.append(" "+sortOrder)
+        } else {
+          query.append(" desc")
+        }
+        if (size.isDefined) 
+          query.append(" limit 0," + size.get);	
+      } else if(size.isDefined){
+        if(timeline.isDefined){
+          if(order.isDefined){
+            query.append(" order by " +selectedTimeline).append(" "+sortOrder).append(" limit 0," + size.get);
+          }else{
+            query.append(" order by " +selectedTimeline+ " desc").append(" limit 0," + size.get);
+          }  
+        } else{
+          if(order.isDefined){
+            query.append(" order by timed ").append(sortOrder).append(" limit 0," + size.get);
+          } else {
+            query.append(" order by timed desc").append(" limit 0," + size.get);
+          }      
+        }
+      } else if(timeline.isDefined){
+          if(order.isDefined){
+            query.append(" order by " +selectedTimeline).append(" "+sortOrder);
+          }else{
+            query.append(" order by " +selectedTimeline+ " desc");
+          } 
+      } else if(order.isDefined){
+        query.append(" order by timed ").append(sortOrder);
+      }
     try{
 	  vsDB(sensorConf.ds).withSession {implicit session=>
         val stmt=session.conn.createStatement

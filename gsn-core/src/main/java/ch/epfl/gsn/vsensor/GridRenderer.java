@@ -26,7 +26,6 @@
 
 package ch.epfl.gsn.vsensor;
 
-import org.slf4j.LoggerFactory;
 
 import ch.epfl.gsn.beans.DataTypes;
 import ch.epfl.gsn.beans.StreamElement;
@@ -36,6 +35,7 @@ import ch.epfl.gsn.vsensor.AbstractVirtualSensor;
 import ch.epfl.gsn.vsensor.GridRenderer;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import javax.imageio.ImageIO;
 
 import java.awt.Color;

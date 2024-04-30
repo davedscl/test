@@ -82,6 +82,7 @@ public class DataEnumerator implements DataEnumeratorIF {
     private StorageManager   storageManager           = null;
 
 	private boolean manualCloseConnection;
+	private boolean hadError = false;
 
 	/**
 	 * Creats an empty data enumerator.
@@ -265,6 +266,10 @@ public class DataEnumerator implements DataEnumeratorIF {
 		} catch (SQLException e) {
 			logger.error(e.getMessage(),e);
 		}
+	}
+
+	public boolean hadError() {
+		return hadError;
 	}
 
 }

@@ -29,9 +29,10 @@ import xml._
 import com.typesafe.config.ConfigFactory
 
 
-case class GsnConf(monitorPort:Int,timeFormat:String, 
+case class GsnConf(monitorPort:Int,timeFormat:String,
     zmqConf:ZmqConf,
-    storageConf:StorageConf,slidingConf:Option[StorageConf])
+    storageConf:StorageConf,slidingConf:Option[StorageConf],
+    maxDBConnections: Int, maxSlidingDBConnections: Int)
     
 object GsnConf extends Conf {
   def create(xml:Elem)=GsnConf(
@@ -39,7 +40,9 @@ object GsnConf extends Conf {
     take(xml \ "time-format").getOrElse(defaultGsn.timeFormat ),
     ZmqConf.create(xml),
     StorageConf.create((xml \ "storage").head),
-    (xml \ "sliding").headOption.map(a=>StorageConf.create((a \ "storage").head))
+    (xml \ "sliding").headOption.map(a=>StorageConf.create((a \ "storage").head)),
+    takeInt(xml \ "max-db-connections").getOrElse(defaultGsn.maxDBConnections),
+    takeInt(xml \ "max-sliding-db-connections").getOrElse(defaultGsn.maxSlidingDBConnections)
   )
   def load(path:String)=create(XML.load(path))
 }

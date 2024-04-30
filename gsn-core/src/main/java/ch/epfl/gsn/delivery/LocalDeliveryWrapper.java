@@ -36,6 +36,7 @@ import javax.naming.OperationNotSupportedException;
 
 import org.slf4j.LoggerFactory;
 
+import ch.epfl.gsn.Main;
 import ch.epfl.gsn.DataDistributer;
 import ch.epfl.gsn.Mappings;
 import ch.epfl.gsn.VirtualSensorInitializationFailedException;
@@ -48,6 +49,10 @@ import ch.epfl.gsn.storage.SQLValidator;
 import ch.epfl.gsn.utils.Helpers;
 import ch.epfl.gsn.vsensor.AbstractVirtualSensor;
 import ch.epfl.gsn.wrappers.AbstractWrapper;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+
 
 import org.slf4j.Logger;
 import org.joda.time.format.ISODateTimeFormat;
@@ -87,23 +92,90 @@ public class LocalDeliveryWrapper extends AbstractWrapper implements DeliverySys
 		if (query == null) 
 			query = "select * from "+vsName;
 
-		long lastVisited;
-		try {
-			lastVisited = Helpers.convertTimeFromIsoToLong(startTime);
-		}catch (Exception e) {
-			logger.error("Problem in parsing the start-time parameter, the provided value is:"+startTime+" while a valid input is:"+CURRENT_TIME);
-			logger.error(e.getMessage(),e);
-			return false;
+		long lastVisited = -1;
+		boolean continuous = false;
+		Connection conn = null;
+		ResultSet rs = null;
+		if (startTime.equals("continue")) {
+			continuous = true;
+			try {
+				conn = Main.getStorage(params.getVirtualSensorConfig()).getConnection();
+				
+				rs = conn.getMetaData().getTables(null, null, params.getVirtualSensorName(), new String[] {"TABLE"});
+				if (rs.next()) {
+					StringBuilder dbquery = new StringBuilder();
+					dbquery.append("select max(timed) from ").append(params.getVirtualSensorName());
+					Main.getStorage(params.getVirtualSensorConfig()).close(rs);
+
+					rs = Main.getStorage(params.getVirtualSensorConfig()).executeQueryWithResultSet(dbquery, conn);
+					if (rs.next()) {
+						lastVisited = rs.getLong(1);
+					}
+				}
+			} catch (SQLException e) {
+				logger.error(e.getMessage(), e);
+			} finally {
+				Main.getStorage(params.getVirtualSensorConfig()).close(rs);
+				Main.getStorage(params.getVirtualSensorConfig()).close(conn);
+			}
+		} else if (startTime.startsWith("-")) {
+			try {
+				lastVisited = System.currentTimeMillis() - Long.parseLong(startTime.substring(1));
+			} catch (NumberFormatException e) {
+				logger.error("Problem in parsing the start-time parameter, the provided value is: " + startTime);
+				logger.error(e.getMessage(), e);
+				return false;				
+			}
+		} else {
+			try {
+				lastVisited = Helpers.convertTimeFromIsoToLong(startTime);
+			} catch (Exception e) {
+				logger.error("Problem in parsing the start-time parameter, the provided value is:"+startTime+" while a valid input is:"+CURRENT_TIME);
+				logger.error(e.getMessage(),e);
+				return false;
+			}
 		}
+
 		try {
 			vsName = SQLValidator.getInstance().validateQuery(query);
 			if(vsName==null) //while the other instance is not loaded.
 				return false;
+			
+			vSensorConfig = Mappings.getConfig(vsName);
+			
+			if (startTime.equals("continue")){
+				try {
+					conn = Main.getStorage(vSensorConfig).getConnection();
+					
+					rs = conn.getMetaData().getTables(null, null, vsName, new String[] {"TABLE"});
+					if (rs.next()) {
+						StringBuilder dbquery = new StringBuilder();
+						dbquery.append("select max(timed) from ").append(vsName);
+						Main.getStorage(vSensorConfig).close(rs);
+
+						rs = Main.getStorage(vSensorConfig).executeQueryWithResultSet(dbquery, conn);
+						if (rs.next()) {
+							long t = rs.getLong(1);
+							if (lastVisited > t) {
+								lastVisited = t;
+								logger.info("newest timed from " + vsName + " is older than requested start time -> using timed as start time");
+							}
+						}
+					}
+				} catch (SQLException e) {
+					logger.error(e.getMessage(), e);
+				} finally {
+					Main.getStorage(vSensorConfig).close(rs);
+					Main.getStorage(vSensorConfig).close(conn);
+				}
+			}
+			if (logger.isDebugEnabled())
+				logger.debug("lastVisited=" + String.valueOf(lastVisited));
+
+
 			query = SQLUtils.newRewrite(query, vsName, vsName.toLowerCase()).toString();
 			
 			logger.debug("Local wrapper request received for: "+vsName);
-			
-			vSensorConfig = Mappings.getConfig(vsName);
 			distributionRequest = DefaultDistributionRequest.create(this, vSensorConfig, query, lastVisited);
 			// This call MUST be executed before adding this listener to the data-distributer because distributer checks the isClose method before flushing.
 		}catch (Exception e) {

@@ -7,7 +7,8 @@ import ch.epfl.gsn.config.VsConf;
 class VsConfigTest extends FunSpec with Matchers {
     
   describe("gps vs config"){
-    val vs=VsConf.load("src/test/resources/conf/vs/gps.xml")
+    //val vs=VsConf.load("src/test/resources/conf/vs/gps.xml")
+    val vs=VsConf.load("gsn-tools/src/test/resources/conf/vs/gps.xml")
     it("should read params"){
       vs.name shouldBe "GPSVS"
       vs.description should startWith ("Virtual sensor producing random")
@@ -17,7 +18,7 @@ class VsConfigTest extends FunSpec with Matchers {
       vs.priority shouldBe 100      
       vs.storageSize shouldBe Some("1m")
       vs.storage shouldBe None
-      vs.processing.className shouldBe "gsn.vsensor.BridgeVirtualSensor"
+      vs.processing.className shouldBe "ch.epfl.gsn.vsensor.BridgeVirtualSensor"
       vs.processing.uniqueTimestamp shouldBe true
       vs.processing.initParams.size shouldBe 0
       val coms=vs.processing.webInput.get.commands
@@ -40,10 +41,11 @@ class VsConfigTest extends FunSpec with Matchers {
   }
   
   describe("scriptlet vs config"){
-    val vs=VsConf.load("src/test/resources/conf/vs/scriptlet.xml")
+    //val vs=VsConf.load("src/test/resources/conf/vs/scriptlet.xml")
+    val vs=VsConf.load("gsn-tools/src/test/resources/conf/vs/scriptlet.xml")
     it("should read params"){
       vs.name shouldBe "scriptletVS"
-      vs.processing.className shouldBe "gsn.processor.ScriptletProcessor"
+      vs.processing.className shouldBe "ch.epfl.gsn.processor.ScriptletProcessor"
       vs.processing.initParams.size shouldBe 2
       val pars=vs.processing.initParams
       pars("persistant") should be ("true")

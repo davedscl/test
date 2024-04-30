@@ -60,9 +60,13 @@ public class VSensorConfig implements Serializable {
 
 	public static final int                        DEFAULT_POOL_SIZE                         = 10;
 
+	public static final boolean                    DEFAULT_STATISTICS                        = false;
+
 	private String                                 name;
 
 	private int                                    priority                                  = DEFAULT_PRIORITY;
+
+	private boolean								   initPriority	                             = false;
 
 	private String                                 mainClass;
 
@@ -105,6 +109,8 @@ public class VSensorConfig implements Serializable {
 	private String sensorMap = "false";
 
 	private String access_protected = "false";
+	private Boolean stats = null;
+	private String statistics = Boolean.toString(DEFAULT_STATISTICS);
 
     /**
 	 * @return Returns the addressing.
@@ -203,6 +209,13 @@ public class VSensorConfig implements Serializable {
 		return this.priority;
 	}
 
+	/**
+	 * @return Returns the initPriority.
+	 */
+	public boolean hasInitPriority( ) {
+		return this.initPriority;
+	}
+
 	public Long getLastModified ( ) {
 		return this.lastModified;
 	}
@@ -269,6 +282,13 @@ public class VSensorConfig implements Serializable {
 	 */
 	public void setPriority ( final int priority ) {
 		this.priority = priority;
+	}
+
+	/**
+	 * @param initPriority set if the file has an initPriority
+	 */
+	public void setInitPriority ( final boolean initPriority ) {
+		this.initPriority = initPriority;
 	}
 
 	public String [ ] getAddressingKeys ( ) {
@@ -442,7 +462,18 @@ public class VSensorConfig implements Serializable {
     }
 
 
-
+	/**
+	 * @return if statistics should be produced
+	 */
+	public boolean isProducingStatistics() {
+		if (stats == null) {
+			if (statistics==null)
+				stats = DEFAULT_STATISTICS;
+			else
+				stats = Boolean.parseBoolean(statistics.trim());
+		}
+		return stats;
+	}
 
 	/**
 	 * @return the webinput

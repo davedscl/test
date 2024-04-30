@@ -85,7 +85,7 @@ public class TestWindowing2 {
 		}
 
 		@Override
-		public Boolean postStreamElement(StreamElement streamElement) {
+		public boolean postStreamElement(StreamElement streamElement) {
 			return super.postStreamElement(streamElement);
 		}
 

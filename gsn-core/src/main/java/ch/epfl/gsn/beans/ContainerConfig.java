@@ -36,6 +36,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.TimeZone;
 
 import org.antlr.stringtemplate.StringTemplate;
 import org.antlr.stringtemplate.StringTemplateGroup;
@@ -56,10 +57,11 @@ public class ContainerConfig {
 	public static final String [ ]      JDBC_URLS_PREFIX                   = new String [ ] { "jdbc:h2:mem:" , "jdbc:h2:file:" , "jdbc:mysql:", "jdbc:jtds:sqlserver:" };
 
 	public static final String            NOT_PROVIDED                     = "Not Provided";
-	
+	public static final String            DEFAULT_TIME_ZONE                = "UTC";
 	public static final int               DEFAULT_MONITOR_PORT             = 22001;
 	public static final int               DEFAULT_ZMQ_PROXY_PORT           = 22022;
 	public static final int               DEFAULT_ZMQ_META_PORT            = 22023;
+	public static final int               DEFAULT_SSL_PORT                 = 8443;
 	public static final boolean           DEFAULT_ZMQ_ENABLED               = false;
     
 	public static final String            FIELD_NAME_monitorPortNo         = "monitorPort";
@@ -82,12 +84,22 @@ public class ContainerConfig {
 	private String                        databaseSystem;
 	private boolean                       isdatabaseSystemInitialzied      = false;
 	protected String                      timeFormat                       = "";
+	private String timeZone = DEFAULT_TIME_ZONE;
+	
+	private String sslKeyStorePassword;
+	private int                           sslPort                           = -1;
+	protected int                         containerPort                     = DEFAULT_MONITOR_PORT;
+	private static final String   		  DEFAULT_SSL_KEYSTORE_PWD			= "changeit";
+	private AccessControlConfig accessControl;
+
+	private int 						  maxDBConnections;
+	private int 						  maxSlidingDBConnections;
 
 	public ContainerConfig(){
 		
 	}
 	
-	public ContainerConfig(int port, String timeFormat, boolean zmqEnabled,int zmqProxyPort,int zmqMetaPort,StorageConfig storage,SlidingConfig slide){
+	public ContainerConfig(int port, String timeFormat, boolean zmqEnabled,int zmqProxyPort,int zmqMetaPort,StorageConfig storage,SlidingConfig slide, int maxDBConnections,int maxSlidingDBConnections){
 		this.monitorPort=port;
 		this.timeFormat=timeFormat;
 		this.zmqEnabled=zmqEnabled;
@@ -95,7 +107,8 @@ public class ContainerConfig {
 		this.zmqMetaPort=zmqMetaPort;
 		this.storage=storage;
 		this.sliding=slide;				
-				
+		this.maxDBConnections = maxDBConnections;
+		this.maxSlidingDBConnections = maxSlidingDBConnections;		
 				
 	}
 
@@ -124,6 +137,15 @@ public class ContainerConfig {
 		this.monitorPort = newValue;
 	}
 	
+	public void setMaxDBConnections( int maxDBConnections ) {
+		this.maxDBConnections = maxDBConnections;
+	}
+	
+	public void setMaxSlidingDBConnections( int maxSlidingDBConnections ) {
+		this.maxSlidingDBConnections = maxSlidingDBConnections;
+	}
+
+	
 	/**
 	 * @return true if the zmq data distribution is enabled.
 	 */
@@ -150,6 +172,20 @@ public class ContainerConfig {
 	 */
 	public int getStoragePoolSize ( ) {
 		return this.storagePoolSize;
+	}
+
+	/**
+	 * @return Returns the maxDBConnections.
+	 */
+	public int getMaxDBConnections ( ) {
+		return this.maxDBConnections;
+	}
+	
+	/**
+	 * @return Returns the maxSlidingDBConnections.
+	 */
+	 public int getMaxSlidingDBConnections ( ) {
+		return this.maxSlidingDBConnections;
 	}
 
 	public static ContainerConfig getConfigurationFromFile (String containerConfigurationFileName) throws FileNotFoundException {
@@ -247,4 +283,25 @@ public class ContainerConfig {
 		return timeFormat;
 	}
 	
+
+
+	public TimeZone getTimeZone() {
+		return TimeZone.getTimeZone(timeZone);
+	}
+
+	public String getSSLKeyStorePassword(){
+		return sslKeyStorePassword == null ? DEFAULT_SSL_KEYSTORE_PWD : sslKeyStorePassword;
+	}
+	public int getSSLPort(){
+		return sslPort;
+	}
+	public int getContainerPort ( ) {
+		return this.containerPort;
+	}
+	
+	public AccessControlConfig getAcConfig() {
+    	if (accessControl == null)
+    		accessControl = new AccessControlConfig();
+        return accessControl;
+    }
 }

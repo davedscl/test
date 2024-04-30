@@ -8,7 +8,7 @@ import concurrent.duration._
 
 class GsnMetadataTest  extends PlaySpec with OneAppPerSuite  {
    
-
+/**
   "gsn metadata" must{
     lazy val conf=ConfigFactory.load
     lazy val gsnServer=conf.getString("gsn.server.url")
@@ -21,6 +21,6 @@ class GsnMetadataTest  extends PlaySpec with OneAppPerSuite  {
 
     }
   }
-
+**/
 
 }

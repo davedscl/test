@@ -56,6 +56,8 @@ import ch.epfl.gsn.beans.windowing.WindowType;
 import ch.epfl.gsn.monitoring.Monitorable;
 import ch.epfl.gsn.utils.GSNRuntimeException;
 import ch.epfl.gsn.wrappers.AbstractWrapper;
+import ch.epfl.gsn.statistics.StatisticsElement;
+import ch.epfl.gsn.statistics.StatisticsHandler;
 
 import org.slf4j.Logger;
 
@@ -220,10 +222,10 @@ public abstract class AbstractWrapper extends Thread implements Monitorable {
 		postStreamElement(se);
 	}
 
-	protected void postStreamElement(long timestamp, Serializable[] values) {
+	protected boolean postStreamElement(long timestamp, Serializable[] values) {
 		StreamElement se = new StreamElement(getOutputFormat(), values,
 				timestamp);
-		postStreamElement(se);
+		return postStreamElement(se);
 	}
 
 	/**
@@ -236,7 +238,7 @@ public abstract class AbstractWrapper extends Thread implements Monitorable {
 	 *         effected any input stream.
 	 */
 
-	protected Boolean postStreamElement(StreamElement streamElement) {
+	protected boolean postStreamElement(StreamElement streamElement) {
 		if (streamElement == null) {
 			logger.info("postStreamElement is called with null ! Wrapper "
 					+ getWrapperName() + " might have a problem !");
@@ -496,6 +498,21 @@ public abstract class AbstractWrapper extends Thread implements Monitorable {
 		stat.put("vs."+activeAddressBean.getVirtualSensorName().replaceAll("\\.", "_")+".input."+ activeAddressBean.getInputStreamName().replaceAll("\\.", "_") +".outOfOrder.counter", oooCount);
 		stat.put("vs."+activeAddressBean.getVirtualSensorName().replaceAll("\\.", "_")+".input."+ activeAddressBean.getInputStreamName().replaceAll("\\.", "_") +".produced.counter", elementCount);
 		return stat;
+	}
+
+	protected boolean inputEvent(long timestamp, long volume) {
+		return inputEvent(timestamp, getActiveAddressBean().getInputStreamName(), volume);
+	}
+
+	protected boolean inputEvent(String sourcename, long volume) {
+		return inputEvent(System.currentTimeMillis(), sourcename, volume);
+	}
+
+	protected boolean inputEvent(long timestamp, String sourcename, long volume) {
+		if (!activeAddressBean.getVirtualSensorConfig().isProducingStatistics())
+			return false;
+		StatisticsElement statisticsElement = new StatisticsElement(timestamp, sourcename, getActiveAddressBean().getInputStreamName(), volume);
+		return StatisticsHandler.getInstance().inputEvent(getActiveAddressBean().getVirtualSensorName(), statisticsElement);
 	}
 	
 	

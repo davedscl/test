@@ -1,0 +1,58 @@
+<virtual-sensor name="UIBK_DPP_LWB_Health" priority="10" >
+    <processing-class>
+        <class-name>ch.epfl.gsn.vsensor.BridgeVirtualSensorPermasense</class-name>
+        <unique-timestamps>false</unique-timestamps>
+        <output-structure>
+            <field name="DEVICE_ID" type="INTEGER" />
+            <field name="GENERATION_TIME" type="BIGINT" unit="unixtime" index="true"/>
+            <field name="GENERATION_TIME_MICROSEC" type="BIGINT"/>
+            <field name="TIMESTAMP" type="BIGINT" unit="unixtime" />
+            <field name="TARGET_ID" type="INTEGER" />
+            <field name="MESSAGE_TYPE" type="INTEGER" />
+            <field name="SEQNR" type="INTEGER" />
+            <field name="PAYLOAD_LENGTH" type="INTEGER" />
+            
+            <field name="BOOTSTRAP_CNT" type="SMALLINT" />
+            <field name="SLEEP_CNT" type="SMALLINT" />
+            <field name="FSR" type="INTEGER" />
+            <field name="T_TO_RX" type="INTEGER" />
+            <field name="T_FLOOD" type="INTEGER" />
+            <field name="N_TX" type="SMALLINT" />
+            <field name="N_RX" type="SMALLINT" />
+            <field name="N_HOPS" type="SMALLINT" />
+            <field name="N_HOPS_MAX" type="SMALLINT" />
+            <field name="UNSYNCED_CNT" type="SMALLINT" />
+            <field name="DRIFT" type="SMALLINT" />
+            <field name="BUS_LOAD" type="SMALLINT" />
+        </output-structure>
+    </processing-class>
+    <description>LWB Health messages from the UIBK deployment</description>
+    <life-cycle pool-size="10" />
+    <addressing />
+    <storage />
+    <streams>
+		<stream name="data1">
+            <source alias="source" storage-size="1" sampling-rate="1">
+                <address wrapper="backlog">
+                    <predicate key="remote-connection">172.27.201.14:9003</predicate>
+                    <predicate key="plugin-classname">ch.epfl.gsn.wrappers.backlog.plugins.DPPMessagePlugin</predicate>
+                    <predicate key="message-classname">ch.epfl.gsn.wrappers.backlog.plugins.dpp.LwbHealthMsg</predicate>
+                </address>
+                <query> select * from wrapper </query>
+            </source>
+            <query> select * from source </query>
+        </stream>
+
+		<stream name="data2">
+            <source alias="source" storage-size="1" sampling-rate="1">
+                <address wrapper="backlog">
+                    <predicate key="remote-connection">172.27.201.3:9003</predicate>
+                    <predicate key="plugin-classname">ch.epfl.gsn.wrappers.backlog.plugins.DPPMessagePlugin</predicate>
+                    <predicate key="message-classname">ch.epfl.gsn.wrappers.backlog.plugins.dpp.LwbHealthMsg</predicate>
+                </address>
+                <query> select * from wrapper </query>
+            </source>
+            <query> select * from source </query>
+        </stream>
+    </streams>
+</virtual-sensor>

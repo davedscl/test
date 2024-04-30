@@ -167,6 +167,7 @@ case class GetAllSensors(latestValues:Boolean=false,timeFormat:Option[String]=No
 case class GetSensor(sensorid:String,latestValues:Boolean=false,timeFormat:Option[String]=None)
 case class GetSensorData(sensorid:String,fields:Seq[String],
 			conditions:Seq[String], size:Option[Int],timeFormat:Option[String],
-			period:Option[String]=None,agg:Option[Aggregation]=None)
+			period:Option[String]=None,agg:Option[Aggregation]=None, orderBy:Option[String]=None,order:Option[String]=None ,timeline:Option[String]=None)
 case class GetGridData(sensorid:String,conditions:Seq[String], size:Option[Int],timeFormat:Option[String],
     boundingBox:Option[Seq[Int]],aggregation:Option[String],asTimeSeries:Boolean)
+

@@ -148,11 +148,7 @@ public class MySQLStorageManager extends StorageManager {
         ResultSet rs = stmt.executeQuery("select version();");
         rs.next();
         String versionInfo = rs.getString(1);
-        if (!versionInfo.trim().startsWith("5.")) {
-            logger.error(new StringBuilder().append("You are using MySQL version : ").append(versionInfo).toString());
-            logger.error("To run GSN using MySQL, you need version 5.0 or later.");
-            System.exit(1);
-        }
+        logger.info(new StringBuilder().append("You are using MySQL version : ").append(versionInfo).toString());
         super.initDatabaseAccess(con);
     }
 

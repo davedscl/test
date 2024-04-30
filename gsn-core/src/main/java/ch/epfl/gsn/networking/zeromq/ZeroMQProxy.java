@@ -58,6 +58,7 @@ public class ZeroMQProxy extends Thread implements Runnable {
 			public void run() {
 				while (true) {
 					String request = clients.recvStr (0);
+					logger.info("ZMQ request: " + request);
 					String [] parts = request.split("\\?");
 					if (parts.length > 1){
 						try{

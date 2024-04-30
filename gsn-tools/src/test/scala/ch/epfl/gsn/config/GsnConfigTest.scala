@@ -16,8 +16,10 @@ class GsnConfigTest extends FunSpec with Matchers {
     }
   }
 
+
   describe("custom gsn config"){
-    val gsn=GsnConf.load("src/test/resources/conf/gsn_test.xml") 
+    //val gsn=GsnConf.load("src/test/resources/conf/gsn_test.xml") 
+    val gsn=GsnConf.load("gsn-tools/src/test/resources/conf/gsn_test.xml") 
     it("should get default parameters"){
       gsn.monitorPort shouldBe 22006
       gsn.zmqConf.enabled shouldBe false

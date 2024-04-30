@@ -1,0 +1,62 @@
+<virtual-sensor name="UIBK_DPP_GNSS_Sv" priority="10" >
+    <processing-class>
+        <class-name>ch.epfl.gsn.vsensor.BridgeVirtualSensorPermasense</class-name>
+        <unique-timestamps>false</unique-timestamps>
+        <output-structure>
+            <field name="DEVICE_ID" type="INTEGER" />
+            <field name="GENERATION_TIME" type="BIGINT" unit="unixtime" index="true"/>
+            <field name="GENERATION_TIME_MICROSEC" type="BIGINT"/>
+            <field name="TIMESTAMP" type="BIGINT" unit="unixtime" />
+            <field name="TARGET_ID" type="INTEGER" />
+            <field name="MESSAGE_TYPE" type="INTEGER" />
+            <field name="SEQNR" type="INTEGER" />
+            <field name="PAYLOAD_LENGTH" type="INTEGER" />
+            
+            <field name="RCVTOW" type="DOUBLE" />
+            <field name="WEEK" type="INTEGER" />
+            <field name="LEAPS" type="SMALLINT" />
+            <field name="NUMMEAS" type="SMALLINT" />
+            <field name="RECSTAT" type="SMALLINT" />
+            <field name="PRMES" type="DOUBLE" />
+            <field name="CPMES" type="DOUBLE" />
+            <field name="DOMES" type="DOUBLE" />
+            <field name="GNSSID" type="SMALLINT" />
+            <field name="SVID" type="SMALLINT" />
+            <field name="CNO" type="SMALLINT" />
+            <field name="LOCKTIME" type="INTEGER" />
+            <field name="PRSTDEV" type="SMALLINT" />
+            <field name="CPSTDEV" type="SMALLINT" />
+            <field name="DOSTDEV" type="SMALLINT" />
+            <field name="TRKSTAT" type="SMALLINT" />
+        </output-structure>
+    </processing-class>
+    <description>GNSS space vehicle messages from the UIBK deployment</description>
+    <life-cycle pool-size="10" />
+    <addressing />
+    <storage />
+    <streams>
+		<stream name="data1">
+            <source alias="source" storage-size="1" sampling-rate="1">
+                <address wrapper="backlog">
+                    <predicate key="remote-connection">172.27.201.14:9003</predicate>
+                    <predicate key="plugin-classname">ch.epfl.gsn.wrappers.backlog.plugins.DPPMessagePlugin</predicate>
+                    <predicate key="message-classname">ch.epfl.gsn.wrappers.backlog.plugins.dpp.GnssSvMsg</predicate>
+                </address>
+                <query> select * from wrapper </query>
+            </source>
+            <query> select * from source </query>
+        </stream>
+
+		<stream name="data2">
+            <source alias="source" storage-size="1" sampling-rate="1">
+                <address wrapper="backlog">
+                    <predicate key="remote-connection">172.27.201.3:9003</predicate>
+                    <predicate key="plugin-classname">ch.epfl.gsn.wrappers.backlog.plugins.DPPMessagePlugin</predicate>
+                    <predicate key="message-classname">ch.epfl.gsn.wrappers.backlog.plugins.dpp.GnssSvMsg</predicate>
+                </address>
+                <query> select * from wrapper </query>
+            </source>
+            <query> select * from source </query>
+        </stream>
+    </streams>
+</virtual-sensor>

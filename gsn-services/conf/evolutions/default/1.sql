@@ -1,5 +1,4 @@
-# --- Created by Ebean DDL
-# To stop Ebean DDL generation, remove this comment and start using Evolutions
+
 
 # --- !Ups
 
@@ -30,18 +29,18 @@ create table groups (
 
 create table group_data_source_read (
   id                        bigint not null,
-  group_id                 bigint,
+  group_id                  bigint,
   data_source_id            bigint,
-  constraint pk_group_data_source_read primary key (id),
-  constraint uq_group_data_source_read unique (group_id, data_source_id))
+  constraint uq_group_data_source_read_1 unique (group_id,data_source_id),
+  constraint pk_group_data_source_read primary key (id))
 ;
 
 create table group_data_source_write (
   id                        bigint not null,
-  group_id                 bigint,
+  group_id                  bigint,
   data_source_id            bigint,
-  constraint pk_group_data_source_write primary key (id),
-  constraint uq_group_data_source_write unique (group_id, data_source_id))
+  constraint uq_group_data_source_write_1 unique (group_id,data_source_id),
+  constraint pk_group_data_source_write primary key (id))
 ;
 
 create table linked_account (
@@ -107,22 +106,29 @@ create table user_data_source_read (
   id                        bigint not null,
   user_id                   bigint,
   data_source_id            bigint,
-  constraint pk_user_data_source_read primary key (id),
-  constraint uq_user_data_source_read unique (user_id, data_source_id))
+  constraint uq_user_data_source_read_1 unique (user_id,data_source_id),
+  constraint pk_user_data_source_read primary key (id))
 ;
 
 create table user_data_source_write (
   id                        bigint not null,
   user_id                   bigint,
   data_source_id            bigint,
-  constraint pk_user_data_source_write primary key (id),
-  constraint uq_user_data_source_write unique (user_id, data_source_id))
+  constraint uq_user_data_source_write_1 unique (user_id,data_source_id),
+  constraint pk_user_data_source_write primary key (id))
 ;
 
 create table user_permission (
   id                        bigint not null,
   value                     varchar(255),
   constraint pk_user_permission primary key (id))
+;
+
+
+create table client_users (
+  client_id                      bigint not null,
+  users_id                       bigint not null,
+  constraint pk_client_users primary key (client_id, users_id))
 ;
 
 create table users_security_role (
@@ -135,12 +141,6 @@ create table users_user_permission (
   users_id                       bigint not null,
   user_permission_id             bigint not null,
   constraint pk_users_user_permission primary key (users_id, user_permission_id))
-;
-
-create table client_users (
-  users_id                       bigint not null,
-  client_id                      bigint not null,
-  constraint pk_client_users primary key (users_id, client_id))
 ;
 
 create table users_groups (
@@ -178,28 +178,40 @@ create sequence user_permission_seq;
 
 alter table client add constraint fk_client_user_1 foreign key (user_id) references users (id) on delete restrict on update restrict;
 create index ix_client_user_1 on client (user_id);
-alter table linked_account add constraint fk_linked_account_user_2 foreign key (user_id) references users (id) on delete restrict on update restrict;
-create index ix_linked_account_user_2 on linked_account (user_id);
-alter table oauth_code add constraint fk_oauth_code_user_3 foreign key (user_id) references users (id) on delete restrict on update restrict;
-create index ix_oauth_code_user_3 on oauth_code (user_id);
-alter table oauth_code add constraint fk_oauth_code_client_4 foreign key (client_id) references client (id) on delete restrict on update restrict;
-create index ix_oauth_code_client_4 on oauth_code (client_id);
-alter table oauth_token add constraint fk_oauth_token_user_5 foreign key (user_id) references users (id) on delete restrict on update restrict;
-create index ix_oauth_token_user_5 on oauth_token (user_id);
-alter table oauth_token add constraint fk_oauth_token_client_6 foreign key (client_id) references client (id) on delete restrict on update restrict;
-create index ix_oauth_token_client_6 on oauth_token (client_id);
-alter table token_action add constraint fk_token_action_targetUser_7 foreign key (target_user_id) references users (id) on delete restrict on update restrict;
-create index ix_token_action_targetUser_7 on token_action (target_user_id);
+alter table group_data_source_read add constraint fk_group_data_source_read_grou_2 foreign key (group_id) references groups (id) on delete restrict on update restrict;
+create index ix_group_data_source_read_grou_2 on group_data_source_read (group_id);
+alter table group_data_source_read add constraint fk_group_data_source_read_data_3 foreign key (data_source_id) references data_source (id) on delete restrict on update restrict;
+create index ix_group_data_source_read_data_3 on group_data_source_read (data_source_id);
+alter table group_data_source_write add constraint fk_group_data_source_write_gro_4 foreign key (group_id) references groups (id) on delete restrict on update restrict;
+create index ix_group_data_source_write_gro_4 on group_data_source_write (group_id);
+alter table group_data_source_write add constraint fk_group_data_source_write_dat_5 foreign key (data_source_id) references data_source (id) on delete restrict on update restrict;
+create index ix_group_data_source_write_dat_5 on group_data_source_write (data_source_id);
+alter table linked_account add constraint fk_linked_account_user_6 foreign key (user_id) references users (id) on delete restrict on update restrict;
+create index ix_linked_account_user_6 on linked_account (user_id);
+alter table oauth_code add constraint fk_oauth_code_user_7 foreign key (user_id) references users (id) on delete restrict on update restrict;
+create index ix_oauth_code_user_7 on oauth_code (user_id);
+alter table oauth_code add constraint fk_oauth_code_client_8 foreign key (client_id) references client (id) on delete restrict on update restrict;
+create index ix_oauth_code_client_8 on oauth_code (client_id);
+alter table oauth_token add constraint fk_oauth_token_user_9 foreign key (user_id) references users (id) on delete restrict on update restrict;
+create index ix_oauth_token_user_9 on oauth_token (user_id);
+alter table oauth_token add constraint fk_oauth_token_client_10 foreign key (client_id) references client (id) on delete restrict on update restrict;
+create index ix_oauth_token_client_10 on oauth_token (client_id);
+alter table token_action add constraint fk_token_action_targetUser_11 foreign key (target_user_id) references users (id) on delete restrict on update restrict;
+create index ix_token_action_targetUser_11 on token_action (target_user_id);
+alter table user_data_source_read add constraint fk_user_data_source_read_user_12 foreign key (user_id) references users (id) on delete restrict on update restrict;
+create index ix_user_data_source_read_user_12 on user_data_source_read (user_id);
+alter table user_data_source_read add constraint fk_user_data_source_read_data_13 foreign key (data_source_id) references data_source (id) on delete restrict on update restrict;
+create index ix_user_data_source_read_data_13 on user_data_source_read (data_source_id);
+alter table user_data_source_write add constraint fk_user_data_source_write_use_14 foreign key (user_id) references users (id) on delete restrict on update restrict;
+create index ix_user_data_source_write_use_14 on user_data_source_write (user_id);
+alter table user_data_source_write add constraint fk_user_data_source_write_dat_15 foreign key (data_source_id) references data_source (id) on delete restrict on update restrict;
+create index ix_user_data_source_write_dat_15 on user_data_source_write (data_source_id);
 
 
 
-alter table group_data_source_read add constraint fk_group_data_source_read_groups_01 foreign key (group_id) references groups (id) on delete restrict on update restrict;
+alter table client_users add constraint fk_client_users_client_01 foreign key (client_id) references client (id) on delete restrict on update restrict;
 
-alter table group_data_source_read add constraint fk_group_data_source_read_data_02 foreign key (data_source_id) references data_source (id) on delete restrict on update restrict;
-
-alter table group_data_source_write add constraint fk_group_data_source_write_groups_01 foreign key (group_id) references groups (id) on delete restrict on update restrict;
-
-alter table group_data_source_write add constraint fk_group_data_source_write_data_02 foreign key (data_source_id) references data_source (id) on delete restrict on update restrict;
+alter table client_users add constraint fk_client_users_users_02 foreign key (users_id) references users (id) on delete restrict on update restrict;
 
 alter table users_security_role add constraint fk_users_security_role_users_01 foreign key (users_id) references users (id) on delete restrict on update restrict;
 
@@ -208,18 +220,6 @@ alter table users_security_role add constraint fk_users_security_role_securi_02 
 alter table users_user_permission add constraint fk_users_user_permission_user_01 foreign key (users_id) references users (id) on delete restrict on update restrict;
 
 alter table users_user_permission add constraint fk_users_user_permission_user_02 foreign key (user_permission_id) references user_permission (id) on delete restrict on update restrict;
-
-alter table user_data_source_read add constraint fk_user_data_source_read_users_01 foreign key (user_id) references users (id) on delete restrict on update restrict;
-
-alter table user_data_source_read add constraint fk_user_data_source_read_data_02 foreign key (data_source_id) references data_source (id) on delete restrict on update restrict;
-
-alter table user_data_source_write add constraint fk_user_data_source_write_users_01 foreign key (user_id) references users (id) on delete restrict on update restrict;
-
-alter table user_data_source_write add constraint fk_user_data_source_write_data_02 foreign key (data_source_id) references data_source (id) on delete restrict on update restrict;
-
-alter table client_users add constraint fk_client_users_users_01 foreign key (users_id) references users (id) on delete restrict on update restrict;
-
-alter table client_users add constraint fk_client_users_client_02 foreign key (client_id) references client (id) on delete restrict on update restrict;
 
 alter table users_groups add constraint fk_users_groups_users_01 foreign key (users_id) references users (id) on delete restrict on update restrict;
 
@@ -231,19 +231,17 @@ SET REFERENTIAL_INTEGRITY FALSE;
 
 drop table if exists client;
 
+drop table if exists client_users;
+
 drop table if exists data_source;
-
-drop table if exists group_data_source_read;
-
-drop table if exists user_data_source_read;
-
-drop table if exists group_data_source_write;
-
-drop table if exists user_data_source_write;
 
 drop table if exists groups;
 
 drop table if exists users_groups;
+
+drop table if exists group_data_source_read;
+
+drop table if exists group_data_source_write;
 
 drop table if exists linked_account;
 
@@ -257,11 +255,13 @@ drop table if exists token_action;
 
 drop table if exists users;
 
-drop table if exists client_users;
-
 drop table if exists users_security_role;
 
 drop table if exists users_user_permission;
+
+drop table if exists user_data_source_read;
+
+drop table if exists user_data_source_write;
 
 drop table if exists user_permission;
 

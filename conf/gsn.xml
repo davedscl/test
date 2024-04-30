@@ -3,6 +3,8 @@
    <zmq-enable>true</zmq-enable>
    <zmqproxy>22022</zmqproxy>
    <zmqmeta>22023</zmqmeta>
+   <max-db-connections>8</max-db-connections>
+   <max-sliding-db-connections>8</max-sliding-db-connections>
 
 
 <!-- Main Storage Database, Mandatory -->

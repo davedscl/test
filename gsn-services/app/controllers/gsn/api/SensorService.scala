@@ -177,27 +177,55 @@ object SensorService extends Controller with GsnService {
       val toStr:Option[String]=queryparam("to")
       val period:Option[String]=queryparam("period")
       val timeFormat:Option[String]=queryparam("timeFormat")
+      val orderBy:Option[String]= queryparam("orderBy")
+      val order: Option[String]=queryparam("order")
+      val timeline: Option[String] = queryparam("timeline")
+      
       val aggFunction=queryparam("agg")
       val aggPeriod=queryparam("aggPeriod")
-      
-      val format=param("format",OutputFormat,defaultFormat)           
+      val isoFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
+      val format=param("format",OutputFormat,defaultFormat)        
       val filters=new ArrayBuffer[String]
       val fields:Array[String]=
         if (!fieldStr.isDefined) Array() 
         else fieldStr.get.split(",")
-      if (fromStr.isDefined)          
-        filters+= "timed>"+dateFormatter.parseDateTime(fromStr.get).getMillis
-      if (toStr.isDefined)          
-        filters+= "timed<"+dateFormatter.parseDateTime(toStr.get).getMillis
-      val conds=XprConditions.parseConditions(filterStr.toArray).recover{                 
+      val filterArray: Array[String] = 
+        if (!filterStr.isDefined) Array() 
+        else filterStr.get.split(",")
+
+      if (fromStr.isDefined) {
+        val fromMillis = if (fromStr.get.contains("+")) {
+          isoFormatter.parseDateTime(fromStr.get).getMillis
+        } else {
+          dateFormatter.parseDateTime(fromStr.get).getMillis
+        }
+        if(timeline.isDefined){
+          filters += timeline.getOrElse("timed")+" > " + fromMillis
+        } else {
+          filters += s"timed > $fromMillis"
+        }
+      }
+
+      if (toStr.isDefined) {
+        val toMillis = if (toStr.get.contains("+")) {
+          isoFormatter.parseDateTime(toStr.get).getMillis
+        } else {
+          dateFormatter.parseDateTime(toStr.get).getMillis
+        }
+        if(timeline.isDefined){
+          filters += timeline.getOrElse("timed")+" < " + toMillis
+         } else {
+          filters += s"timed < $toMillis"
+         }
+      }
+      val conds=XprConditions.parseConditions(filterArray).recover{                 
         case e=>throw new IllegalArgumentException("illegal conditions in filter: "+e.getMessage())
       }.get.map(_.toString)
       val agg=aggFunction.map{f=>Aggregation(f,aggPeriod.get)}
-      
       val p=Promise[Seq[SensorData]]               
       val q=Akka.system.actorOf(Props(new QueryActor(p)))
       Logger.debug("request the query actor")
-      q ! GetSensorData(vsname,fields,conds++filters,size,timeFormat,period,agg)
+      q ! GetSensorData(vsname,fields,conds++filters,size,timeFormat,period,agg,orderBy,order,timeline)
       //val to=play.api.libs.concurrent.Promise.timeout(throw new Exception("bad things"), 15.second)
       p.future.map{data=>        
         Logger.debug("before formatting")
@@ -375,3 +403,4 @@ object SensorService extends Controller with GsnService {
   
   
 }
+

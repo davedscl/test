@@ -62,6 +62,8 @@ public abstract class StorageManager {
 
     private BasicDataSource pool;
 
+    private int Idcounter=0;
+
     public void init(String databaseDriver, String username, String password, String databaseURL, int maxDBConnections) {
         this.databaseDriver = databaseDriver;
         pool = DataSources.getDataSource(new DBConnectionInfo(databaseDriver,databaseURL,username,password));
@@ -480,7 +482,34 @@ public abstract class StorageManager {
         logger.debug(new StringBuilder().append("The create index statement is : ").append(sql).toString());
         prepareStatement = connection.prepareStatement(sql.toString());
         prepareStatement.execute();
+        prepareStatement.close();
+        for (DataField field : structure) {
+        	if (!field.getIndex())
+        		continue;
+        	sql = getStatementCreateIndexOnField(tableName, field.getName().toUpperCase(), false);
+            if (logger.isDebugEnabled())
+                logger.debug(new StringBuilder().append(
+                        "The create index statement is : ").append(sql).toString());
+            prepareStatement = connection.prepareStatement(sql.toString());
+            prepareStatement.execute();
+            prepareStatement.close();
+        } 
 
+    }
+
+
+    public StringBuilder getStatementCreateIndexOnField(
+            CharSequence tableName, String field, boolean unique) throws SQLException {
+    	return getStatementCreateIndexOnField(tableName, field, unique, "");	
+    }
+
+    private StringBuilder getStatementCreateIndexOnField(
+            CharSequence tableName, String field, boolean unique, String order) throws SQLException {
+        StringBuilder toReturn = new StringBuilder("CREATE ");
+        if (unique)
+            toReturn.append(" UNIQUE ");
+        toReturn.append(" INDEX ").append(field).append(System.currentTimeMillis()).append("_").append(Idcounter++).append("_INDEX").append(" ON ").append(tableName).append(" (").append(field).append(" ").append(order).append(")");
+        return toReturn;
     }
 
     public ResultSet executeQueryWithResultSet(StringBuilder query,Connection connection) throws SQLException {

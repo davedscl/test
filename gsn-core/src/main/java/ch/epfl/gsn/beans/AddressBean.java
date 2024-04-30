@@ -195,6 +195,7 @@ public final class AddressBean implements Serializable{
 
 	private String inputStreamName;
 	private String virtualSensorName;
+	private VSensorConfig vsconfig;
 
 	public DataField[] getOutputStructure() {
 		return wrapperOutputStructure;
@@ -218,6 +219,14 @@ public final class AddressBean implements Serializable{
 
 	public void setVirtualSensorName(String virtualSensorName) {
 		this.virtualSensorName = virtualSensorName;
+	}
+
+	public VSensorConfig getVirtualSensorConfig() {
+		return vsconfig;
+	}
+
+	public void setVirtualSensorConfig(VSensorConfig vsconfig) {
+		this.vsconfig = vsconfig;
 	}
 
 

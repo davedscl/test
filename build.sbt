@@ -1,13 +1,13 @@
 
 lazy val commonSettings = Seq(
   organization := "ch.epfl.gsn",
-  version := "2.0.2_SNAPSHOT",
+  version := "2.0.2",
   scalaVersion := "2.11.2",
-  javacOptions in (Compile, compile) ++= Seq("-source", "1.7", "-target", "1.7", "-bootclasspath", "/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/rt.jar"),
+  javacOptions in (Compile, compile) ++= Seq("-source", "1.7", "-target", "1.7"),
   resolvers ++= Seq(
     DefaultMavenRepository,
-    "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
-    "osgeo" at "http://download.osgeo.org/webdav/geotools/",
+    "Typesafe Repository" at "https://repo.maven.apache.org/maven2/",
+    "osgeo" at "https://repo.osgeo.org/repository/release/",
     "play-authenticate (release)" at "https://oss.sonatype.org/content/repositories/releases/",
     "play-authenticate (snapshot)" at "https://oss.sonatype.org/content/repositories/snapshots/",
     "Local ivy Repository" at ""+Path.userHome.asFile.toURI.toURL+"/.ivy2/local",
@@ -30,7 +30,7 @@ publishTo &lt;&lt;= version { v: String =&gt;
   publishArtifact in (Test) := false,
   publishArtifact in (Compile, packageBin) := true,
   publishArtifact in (Compile, packageSrc) := true,
-  publishArtifact in (Compile, packageDoc) := true,
+  publishArtifact in (Compile, packageDoc) := false,
   pomIncludeRepository := { x => false },
   pomExtra := (
   <url>http://gsn.epfl.ch</url>
@@ -94,3 +94,4 @@ lazy val startAll = taskKey[Unit]("Start all the GSN modules")
 //  (re-start in core).value
 //  (run in services).value
 //}
+

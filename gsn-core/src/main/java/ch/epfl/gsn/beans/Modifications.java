@@ -55,6 +55,8 @@ import ch.epfl.gsn.utils.graph.Graph;
 import ch.epfl.gsn.utils.graph.Node;
 import ch.epfl.gsn.utils.graph.NodeNotExistsExeption;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import org.slf4j.Logger;
 
 /**
@@ -228,17 +230,30 @@ public final class Modifications {
 					AddressBean[] addressing = sources[sourceIndex].getAddressing();
 					boolean hasValidAddressing = false;
 					for (int addressingIndex = 0; addressingIndex < addressing.length; addressingIndex++) {
+						String wrapper = addressing[addressingIndex].getWrapper();
+						boolean isLocalZeroMQ = false;
+						if(wrapper.equals("zeromq-sync")){
+							String address = addressing[addressingIndex].getPredicateValue("address").toLowerCase();
+							try {
+								isLocalZeroMQ = new URI(address).getScheme().equals("inproc");
+							} catch (URISyntaxException e) {
+								throw new IllegalArgumentException(e);
+							}
+						}
 						String vsensorName = addressing[addressingIndex].getPredicateValue("query");
 						if (vsensorName!=null) {
 							vsensorName = SQLUtils.getTableName(vsensorName);
+							if(vsensorName ==null)
+								vsensorName=Double.toString(Math.random()*1000000000.0);
+						}else if(isLocalZeroMQ){
+							vsensorName = addressing[addressingIndex].getPredicateValue("vsensor");
 							if(vsensorName ==null)
 								vsensorName=Double.toString(Math.random()*1000000000.0);
 						}else {
 							vsensorName = addressing[addressingIndex].getPredicateValueWithDefault("name",Double.toString(Math.random()*10000000.0));
 						}
 						vsensorName=vsensorName.toLowerCase();
-						String wrapper = addressing[addressingIndex].getWrapper();
-
+						
 						Class<?> wrapperClass = Main.getWrapperClass(wrapper);
 						if (wrapperClass == null) {
 							//If this addressing element is the last one, remove VS from the graph
@@ -255,8 +270,7 @@ public final class Modifications {
 							continue;
 						}
 
-
-						if(( wrapperClass.isAssignableFrom(LocalDeliveryWrapper.class)) ){
+						if(( wrapperClass.isAssignableFrom(LocalDeliveryWrapper.class)) || (wrapper.equals("zeromq-sync") && isLocalZeroMQ) ){
 							String vsName = vsensorName.toLowerCase().trim();
 							VSensorConfig sensorConfig = vsNameTOVSConfig.get(vsName);
 							if(sensorConfig == null)
@@ -347,3 +361,4 @@ public final class Modifications {
 	}
 
 }
+

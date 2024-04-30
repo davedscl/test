@@ -129,9 +129,9 @@ public final class Main {
 		updateSplashIfNeeded(new String[] {"GSN is starting...", "All GSN logs are available at: logs/ch.epfl.gsn.log"});
 		System.out.println("Global Sensor Networks (GSN) is starting...");
 	
-        int maxDBConnections = System.getProperty("maxDBConnections") == null ? DEFAULT_MAX_DB_CONNECTIONS : Integer.parseInt(System.getProperty("maxDBConnections"));
-        int maxSlidingDBConnections = System.getProperty("maxSlidingDBConnections") == null ? DEFAULT_MAX_DB_CONNECTIONS : Integer.parseInt(System.getProperty("maxSlidingDBConnections"));
-
+        int maxDBConnections = containerConfig.getMaxDBConnections();
+        int maxSlidingDBConnections = containerConfig.getMaxSlidingDBConnections();
+		
     	DataStore ds = new DataStore(gsnConf);
 
         mainStorage = StorageManagerFactory.getInstance(containerConfig.getStorage().getJdbcDriver ( ) , containerConfig.getStorage().getJdbcUsername ( ) , containerConfig.getStorage().getJdbcPassword ( ) , containerConfig.getStorage().getJdbcURL ( ) , maxDBConnections);

@@ -147,4 +147,19 @@ public final class DataField implements Serializable {
     public void setUnit(String unit) {
         this.unit = unit;
     }
+
+   public void setIndex(String index) {
+	   if (index.compareToIgnoreCase("true")==0)
+		   this.index = true;
+	   else
+		   this.index = false;
+   }
+   
+   public void setIndex(boolean index) {
+	   this.index = index;
+   }
+   
+   public boolean getIndex() {
+	   return index;
+   }
 }

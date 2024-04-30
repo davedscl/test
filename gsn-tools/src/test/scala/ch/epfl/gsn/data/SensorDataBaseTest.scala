@@ -21,7 +21,7 @@ object SensorDataBaseTest {
         Sensing("relative_humidity",Output("relative_humidity",vsname,DataUnit("Perc","Perc"),DoubleType)))
         
     val sensor=SensorInfo(new Sensor(vsname,fields,null,Map()),None,None)
-    val res=SensorDatabase.query(sensor, Seq(), Seq(), Some(6), None)
+    val res=SensorDatabase.query(sensor, Seq(), Seq(), Some(6), None,Some("defaultOrderBy"), Some("asc"), Some("defaultTimeline"))
     println(res.ts.size)
   }
 }

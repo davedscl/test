@@ -68,7 +68,7 @@ class QueryActor(p:Promise[Seq[SensorData]]) extends Actor {
         }
         try{
           if (g.agg.isEmpty)
-            p.success(Seq(query(s,g.fields ,conds ,g.size,g.timeFormat )))
+            p.success(Seq(query(s,g.fields ,conds ,g.size,g.timeFormat,g.orderBy,g.order,g.timeline )))
           else
             p.success(Seq(aggregationQuery(s,g.fields ,conds ,g.size,g.timeFormat,g.agg.get.aggFunction,g.agg.get.aggPeriod)))
         }                    
@@ -107,3 +107,4 @@ class QueryActor(p:Promise[Seq[SensorData]]) extends Actor {
   
   
 }
+

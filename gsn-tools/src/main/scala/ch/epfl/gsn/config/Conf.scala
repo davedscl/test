@@ -50,5 +50,5 @@ trait Conf{
       storage.getString("user"),storage.getString("password"),None)
 
   lazy val defaultGsn=GsnConf(defaults.getInt("monitorPort"),defaults.getString("timeFormat"),
-      defaultZmq,defaultStorage,None)
+      defaultZmq,defaultStorage,None,defaults.getInt("maxDBConnections"), defaults.getInt("maxSlidingDBConnections"))
 }

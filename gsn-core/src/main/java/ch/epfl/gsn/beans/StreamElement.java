@@ -35,6 +35,7 @@ import play.libs.Json;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.TreeMap;
+import java.util.Arrays;
 
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.LoggerFactory;
@@ -71,6 +72,7 @@ public final class StreamElement implements Serializable {
 	private static final String NULL_ENCODING = "NULL"; // null encoding for transmission over xml-rpc
 
 	private boolean timestampProvided = false;
+	private Long volume = null;
 
 
 	public StreamElement (StreamElement other) {
@@ -84,6 +86,7 @@ public final class StreamElement implements Serializable {
 		}
 		this.timeStamp=other.timeStamp;
 		this.internalPrimayKey = other.internalPrimayKey;
+		this.volume = other.volume;
 	}
 	
 	public StreamElement(){ //constructor for serialization
@@ -103,6 +106,7 @@ public final class StreamElement implements Serializable {
 		if ( this.fieldNames.length != data.length ) throw new IllegalArgumentException( "The length of dataFileNames and the actual data provided in the constructor of StreamElement doesn't match." );
 		this.verifyTypesCompatibility( this.fieldTypes , data );
 		this.fieldValues = data;
+		this.volume = null;
 	}
 
 	public StreamElement ( final String [ ] dataFieldNames , final Byte [ ] dataFieldTypes , final Serializable [ ] data ) {
@@ -118,6 +122,7 @@ public final class StreamElement implements Serializable {
 		this.fieldTypes = dataFieldTypes;
 		this.fieldNames = dataFieldNames;
 		this.fieldValues = data;
+		this.volume = null;
 		this.verifyTypesCompatibility( dataFieldTypes , data );
 	}
 
@@ -154,7 +159,52 @@ public final class StreamElement implements Serializable {
 		this.fieldValues=fieldValues;
 		this.indexedFieldNames=indexedFieldNames;
 		this.timeStamp=timestamp;
+		this.volume = null;
 	}
+
+	
+	public StreamElement (StreamElement other, final DataField [ ] outputStructure , final Serializable [ ] data) {
+		int len = other.fieldNames.length + outputStructure.length;
+		this.fieldNames=new String[len];
+		this.fieldValues=new Serializable[len];
+		this.fieldTypes=new Byte[len]; 
+		for (int i=0;i<other.fieldNames.length;i++) {
+			this.fieldNames[i]=other.fieldNames[i];
+			this.fieldValues[i]=other.fieldValues[i];
+			this.fieldTypes[i]=other.fieldTypes[i];
+		}
+		for (int i=0;i<outputStructure.length;i++) {
+			this.fieldNames[other.fieldNames.length+i]=outputStructure[i].getName();
+			this.fieldValues[other.fieldNames.length+i]=data[i];
+			this.fieldTypes[other.fieldNames.length+i]=outputStructure[i].getDataTypeID();			
+		}
+		this.timeStamp=other.timeStamp;
+		this.internalPrimayKey = other.internalPrimayKey;
+		this.volume = null;
+	}
+	
+	public StreamElement (StreamElement other, final String [ ] dataFieldNames , final Byte [ ] dataFieldTypes , final Serializable [ ] data) {
+		int len = other.fieldNames.length + dataFieldNames.length;
+		this.fieldNames=new String[len];
+		this.fieldValues=new Serializable[len];
+		this.fieldTypes=new Byte[len]; 
+		for (int i=0;i<other.fieldNames.length;i++) {
+			this.fieldNames[i]=other.fieldNames[i];
+			this.fieldValues[i]=other.fieldValues[i];
+			this.fieldTypes[i]=other.fieldTypes[i];
+		}
+		for (int i=0;i<dataFieldNames.length;i++) {
+			this.fieldNames[other.fieldNames.length+i]=dataFieldNames[i];
+			this.fieldValues[other.fieldNames.length+i]=data[i];
+			this.fieldTypes[other.fieldNames.length+i]=dataFieldTypes[i];			
+		}
+		this.timeStamp=other.timeStamp;
+		this.internalPrimayKey = other.internalPrimayKey;
+		this.volume = null;
+	}
+	
+
+
 	
 	/**
 	 * Verify if the data corresponds to the fieldType
@@ -316,7 +366,8 @@ public final class StreamElement implements Serializable {
 		generateIndex();
 		Integer index = indexedFieldNames.get( fieldName );
 		if (index == null) {
-			logger.warn("There is a request for type of field "+fieldName+" for StreamElement: "+this.toString()+". As the requested field doesn't exist, GSN returns Null to the callee.");
+			if(logger.isDebugEnabled())
+				logger.warn("There is a request for type of field "+fieldName+" for StreamElement: "+this.toString()+". As the requested field doesn't exist, GSN returns Null to the callee.");
 			return null;
 		}
 		return this.fieldTypes[ index ];
@@ -329,6 +380,94 @@ public final class StreamElement implements Serializable {
 	public void setInternalPrimayKey ( long internalPrimayKey ) {
 		this.internalPrimayKey = internalPrimayKey;
 	}
+
+
+	/**
+	 * This method compares this StreamElement with an other one,
+	 * ignoring the specified field names and ignoring the TIMED value.
+	 * Two StreamElements are seen to be the same, if all elements
+	 * (except the ones to be ignored) are of equal type and content.
+	 * 
+	 * @param se: an other StreamElement.
+	 * @param fieldNamesToBeIgnored: all field names to be ignored
+	 * @return true, if both StreamElements are the same, otherwise false.
+	 */
+	public boolean equalsIgnoreTimedAndFields(StreamElement se, String[] fieldNamesToBeIgnored) {
+		if (se == null)
+			return false;
+		if (this.getFieldNames().length != se.getFieldNames().length)
+			return false;
+		
+		Serializable[] fieldValues = se.getData();
+		String[] fieldNames = se.getFieldNames();
+		Byte[] fieldTypes = se.getFieldTypes();
+		
+		for (int i=0; i<this.getFieldNames().length; i++) {
+			if (this.fieldTypes[i].compareTo(fieldTypes[i]) != 0)
+				return false;
+			if (this.fieldNames[i].compareToIgnoreCase(fieldNames[i]) != 0)
+				return false;
+			
+			boolean cont = false;
+			if (fieldNamesToBeIgnored != null) {
+				for (int j=0; j<fieldNamesToBeIgnored.length; j++) {
+					if (this.fieldNames[i].compareToIgnoreCase(fieldNamesToBeIgnored[j]) == 0) {
+						cont = true;
+						break;
+					}
+				}
+			}
+			if (cont)
+				continue;
+			
+			if (this.fieldValues[i] == null && fieldValues[i] != null)
+				return false;
+			if (this.fieldValues[i] != null && fieldValues[i] == null)
+				return false;
+
+			if (!(this.fieldValues[i] == null && fieldValues[i] == null)) {
+				switch ( fieldTypes[ i ] ) {
+					case DataTypes.DOUBLE :
+						if (((Double)this.fieldValues[i]).compareTo((Double)fieldValues[i]) != 0)
+							return false;
+						break;
+					case DataTypes.BIGINT :
+						if (((Long)this.fieldValues[i]).compareTo((Long)fieldValues[i]) != 0)
+							return false;
+						break;
+					case DataTypes.TINYINT :
+						if (((Byte)this.fieldValues[i]).compareTo((Byte)fieldValues[i]) != 0)
+							return false;
+						break;
+					case DataTypes.SMALLINT :
+						if (((Short)this.fieldValues[i]).compareTo((Short)fieldValues[i]) != 0)
+							return false;
+						break;
+					case DataTypes.INTEGER :
+						if (((Integer)this.fieldValues[i]).compareTo((Integer)fieldValues[i]) != 0)
+							return false;
+						break;
+					case DataTypes.CHAR :
+					case DataTypes.VARCHAR :
+						if (((String)this.fieldValues[i]).compareTo((String)fieldValues[i]) != 0)
+							return false;
+						break;
+					case DataTypes.BINARY :
+						if (!Arrays.equals((byte[])this.fieldValues[i], (byte[])fieldValues[i]))
+							return false;
+						break;
+					default :
+						logger.error( "Type can't be converted : TypeID : " + fieldTypes[ i ] );
+						return false;
+				}
+			}
+		}
+		return true;
+	}
+
+
+
+
 
 	/**
 	 * @return
@@ -606,4 +745,47 @@ public final class StreamElement implements Serializable {
 
 		return Json.toJson(feature).toString();
     }
+
+
+		public long getVolume() {
+		if (volume == null) {
+			volume = (long) 0;
+			for ( int i = 0 ; i < fieldNames.length ; i++ ) {
+				if ( fieldValues[ i ] == null ) continue;
+				switch ( fieldTypes[ i ] ) {
+				case DataTypes.TINYINT :
+					volume += 1;
+					break;
+				case DataTypes.SMALLINT :
+					volume += 2;
+					break;
+				case DataTypes.BIGINT :
+					volume += 8;
+					break;
+				case DataTypes.CHAR :
+					volume += 2;
+					break;
+				case DataTypes.VARCHAR :
+					volume += ((String)fieldValues[ i ]).getBytes().length;
+					break;
+				case DataTypes.INTEGER :
+					volume += 4;
+					break;
+				case DataTypes.DOUBLE:
+					if (fieldValues[ i ] instanceof Float)
+						volume += 4;
+					else if(fieldValues[ i ] instanceof Double)
+						volume += 8;
+					break;
+				case DataTypes.BINARY :
+					if ( fieldValues[ i ] instanceof byte [ ])
+						volume += ((byte[])fieldValues[ i ]).length;
+					else if (fieldValues[ i ] instanceof String)
+						volume += ((String)fieldValues[ i ]).getBytes().length;
+					break;
+				}
+			}
+		}
+		return volume;
+	}
 }

@@ -55,6 +55,9 @@ import ch.epfl.gsn.beans.VSensorConfig;
 import ch.epfl.gsn.wrappers.AbstractWrapper;
 import ch.epfl.gsn.wrappers.WrappersUtil;
 
+import ch.epfl.gsn.utils.graph.Graph;
+import ch.epfl.gsn.utils.graph.Node;
+
 import org.slf4j.Logger;
 
 public class VSensorLoader extends Thread {
@@ -169,10 +172,27 @@ public class VSensorLoader extends Thread {
         Modifications modifications = getUpdateStatus(pluginsDir);
         ArrayList<VSensorConfig> removeIt = modifications.getRemove();
         ArrayList<VSensorConfig> addIt = modifications.getAdd();
+		Graph<VSensorConfig> sensorGraph= modifications.getGraph();
+		ArrayList<Node<VSensorConfig>> rootNodes= sensorGraph.getRootNodes();
+		ArrayList<VSensorConfig> newadd= new ArrayList<VSensorConfig>();
+		ArrayList<VSensorConfig> elementsToRemove = new ArrayList<>();
+
+		for (VSensorConfig config : addIt) {
+			if(config.hasInitPriority() && rootNodes.contains(sensorGraph.findNode(config))){
+				newadd.add(config);
+				elementsToRemove.add(config);
+			}
+		}
+
+		addIt.removeAll(elementsToRemove);
+		newadd.addAll(addIt);
+
+
         for (VSensorConfig configFile : removeIt) {
             removeVirtualSensor(configFile);
         }
-        for (VSensorConfig vs : addIt) {
+
+        for (VSensorConfig vs : newadd) {
         	try{
                 loadPlugin(vs);
         	}catch(Exception e){
@@ -451,6 +471,7 @@ public class VSensorLoader extends Thread {
 		for ( AddressBean addressBean : streamSource.getAddressing ( ) ) {
 			addressBean.setInputStreamName(inputStream.getInputStreamName());
 			addressBean.setVirtualSensorName(vsensorConfig.getName());
+			addressBean.setVirtualSensorConfig(vsensorConfig);
 			wrapper = createWrapper(addressBean);
 			try {
 				if (wrapper!=null && prepareStreamSource( streamSource,wrapper.getOutputFormat(),wrapper)) 
