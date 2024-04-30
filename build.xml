@@ -1,0 +1,96 @@
+<project name="gsn" default="build" basedir="." xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+
+    <property name="gsn-controller-port" value="22932"/>
+    <property name="max-servlets" value="20"/>
+    <property name="max-form-size" value="500000000"/>
+    <property name="max-db-connections" value="8"/>
+    <property name="max-sliding-db-connections" value="8"/>
+    <property name="remote-keep-alive-period" value="15000"/>
+    <property name="aes-enc-salt" value="this is a simple clear salt"/>
+
+    <!-- Internal -->
+    <path id="maven-ant-tasks.classpath" path="${basedir}/lib/build/maven-ant-tasks-2.1.3.jar" />
+    <typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="antlib:org.apache.maven.artifact.ant" classpathref="maven-ant-tasks.classpath" />
+
+    <import file="${basedir}/gsn-core/build.xml"/>
+    <import file="${basedir}/gsn-extra/build.xml"/>
+    <import file="${basedir}/installer/build.xml"/>
+    <import file="${basedir}/packager/build.xml"/>
+	
+    <target name="init" description="Initializes properties and initialization tasks.">
+        <tstamp>
+            <format property="TODAY" pattern="yyyy-MMMM-d-'at'-hh-mm-aa" locale="en"/>
+        </tstamp>
+        <property environment="env"/>
+        <property name="conf.dir" value="${basedir}/conf"/>  	
+        <property name="jars.dir" value="${basedir}/jars"/>
+        <property name="maxMemoryUsage" value="128m"/>
+    </target>
+
+    <target name="setup" depends="init" description="Setup the build target.">
+        <mkdir dir="logs"/>
+        <mkdir dir="${jars.dir}"/>
+    	<echo>${ant.java.version}</echo>
+    </target>
+
+    <target name="build" depends="build-gsn-core,build-gsn-extra" description="Compile the cource code." />
+
+    <target name="cleandb" depends="build">
+        <java classname="ch.epfl.gsn.storage.CleanDB" fork="true" dir="${basedir}" inputstring=""  classpathref="core-classpath" />
+    </target>
+
+
+    <!-- Run -->
+
+    <target name="gsn" depends="cleandb" description="Run GSN server in non graphical mode.">
+        <java classname="ch.epfl.gsn.Main" maxmemory="${maxMemoryUsage}" spawn="false" fork="true" dir="${basedir}" classpathref="core-classpath">
+            <jvmarg value="-Djavax.xml.parsers.DocumentBuilderFactory=com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl"/>
+            <jvmarg value="-Dorg.apache.commons.logging.Log=org.apache.commons.logging.impl.Log4JLogger"/>
+            <jvmarg value="-DmaxServlets=${max-servlets}"/>
+            <jvmarg value="-DmaxDBConnections=${max-db-connections}"/>
+            <jvmarg value="-DmaxSlidingDBConnections=${max-sliding-db-connections}"/>
+            <jvmarg value="-Dorg.eclipse.jetty.server.Request.maxFormContentSize=${max-form-size}"/>
+            <jvmarg value="-Dsalt=${aes-enc-salt}"/>
+            <jvmarg value="-DremoteKeepAlivePeriod=${remote-keep-alive-period}"/>
+            <!-- <jvmarg value="-Djava.library.path=/usr/local/lib/R/site-library/rJava/jri"/>  uncomment this under Linux to load rJava lib -->
+            <!-- <jvmarg value="-Djava.library.path=C:\\users\\admin\\Documents/R/win-library/2.12/rJava/jri"/>  uncomment this under Windows to load rJava lib -->
+            <arg id="gsnc-port" value="${gsn-controller-port}"/>
+            <!-- <jvmarg value="-server"/> Sometimes on windows compaines about a missing dll.-->
+            <!-- For profiling using JConsole <jvmarg value="-Dcom.sun.management.jmxremote"/> -->
+            <!-- For JDK5 profiling <jvmarg value="-Xrunhprof:heap=sites,depth=15,force=n"/> -->
+        </java>
+    </target>
+
+    <target name="restart" depends="stop,gsn" description="Restart GSN Server in non graphical mode."/>
+
+    <target name="stop" depends="build" description="Stop the running GSN server (if any).">
+        <java classname="ch.epfl.gsn.GSNStop" maxmemory="${maxMemoryUsage}" fork="false" dir="${basedir}"
+              classpathref="core-classpath">
+            <arg id="gsnc-port" value="${gsn-controller-port}"/>
+        </java>
+    </target>
+
+
+    <!-- Dev -->
+
+    <target name="clean" depends="init, clean-gsn-core, clean-gsn-extra" description="Erase built files and target.">
+        <delete includeEmptyDirs="yes" failonerror="no">
+            <fileset dir="${jars.dir}" includes="**/*"/>
+        </delete>
+    </target>
+    
+    <!-- Tests -->
+
+    <target name="test-report" depends="test-report-gsn-core,test-report-gsn-extra" description="Runs JUnit tests, generates jcoverage,junit,todo reports"/>
+
+    <!-- Distribution -->
+
+    <target name="docs" depends="setup, docs-gsn-core, docs-gsn-extra"/>
+        
+    <target name="jar" depends="jar-gsn-core, jar-gsn-extra" description="Create jar files containing the GSN classes."/>
+
+    <target name="installer" depends="build-gsn" description="Build a GSN Server installer based on izpack."/>
+
+    <target name="packager" depends="pack-gsn" description="Build GSN Server Debian and RPM packages."/>
+
+</project>
